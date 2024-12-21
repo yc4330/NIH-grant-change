@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>NIH Grant Change</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
+	<script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css" rel="stylesheet" />
+	<script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<style>
+	body { margin: 0; padding: 0; display: flex; height: 100vh; }
+    
+	#sidebar {
+            width: 20%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        #map {
+            width: 80%;
+        }
+        h1 {
+            margin-top: 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+			margin-left: 20px;
+			border: none;
+			outline: none;
+			/*
+            border: none;
+            border-radius: 4px; */
+        }
+		#info {
+            margin-top: 20px;
+        }
+		.return-btn {
+            padding: 10px;
+			width: 100%;
+			margin: 5px;
+            background-color: #bababa;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+			margin-bottom: 20px;
+        }
+        .return-btn:hover {
+            background-color: #caadff;
+        }
+		.button-container {
+    display: flex; /* 使用flex布局 */
+    justify-content: space-between; /* 使按钮之间有空间 */
+}
+		#chart {
+            margin-top: 20px;
+        }
+
+    .mapboxgl-popup {
+	    max-width: 400px;
+	    font:
+	        12px/20px 'Helvetica Neue',
+	        Arial,
+	        Helvetica,
+	        sans-serif;
+	}
+	#filter {
+            position: absolute;
+            z-index: 1;
+            background: white;
+            padding: 10px;
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            top: 10px;
+            right: 10px;
+            font-family: 'Open Sans', sans-serif;
+        }
+	
+</style>
+
+<body>
+	<div id="filter">
+        <label for="type-filter">Filter by type:</label>
+        <select id="type-filter">
+            <option value="">All</option>
+            <!-- Options will be dynamically populated -->
+        </select>
+    </div>
+	<div id="sidebar">
+        <h1>NIH grants</h1>
+        <h2>How it changed after 2019</h2>
+		<div class="button-container">
+		<button id="return-btn-US" class="return-btn">US</button>
+		<button id="return-btn-China" class="return-btn">China</button>
+	</div>
+		<div id="geocoder"></div>
+		<div id="info">
+            <p id="info-text">Click on a point to see the details below.</p>
+			<div id="chart"></div>
+        </div>
+    </div>
+	<div id="map"></div>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoieWM0MzMwIiwiYSI6ImNscHcxbTh4ODA5MWIya3BkdGRwYmY4NDAifQ.FZwISQxPNuPKo-DeKH5GvA';
+
+var map = new mapboxgl.Map({
+    container: 'map', // container ID
+    center: [-98.5795, 39.8283], // starting position [lng, lat]. Note that lat must be set between -90 and 90
+    zoom: 3.7, // starting zoom
+    style: "mapbox://styles/yc4330/clyhdi2t701i101nz1yowctxm"
+});
+
+var geocoder = new MapboxGeocoder({
+            accessToken: mapboxgl.accessToken,
+            mapboxgl: mapboxgl,
+            placeholder: 'Search your city or institution', // Placeholder text for the search bar
+        });
+
+document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+
+geocoder.on('result', function(e) {
+            map.flyTo({
+                center: e.result.center,
+                zoom: 10 // Adjust zoom level as needed
+            });
+        });
+
+
+
+map.on('style.load', () => {
+            map.addSource('try', {
+	    		type: 'geojson',
+	    		data: 'institution0812.geojson'
+	    	});
+
+map.loadImage('arrow.png', function(error, image) {
+    if (error) {
+        console.error('Image loading error:', error);
+        return;
+    }
+    map.addImage('arrow', image);
+
+    // 在图像成功加载并添加到地图后，添加图层
+    // 添加一个图层，只显示 'change_percent' 小于 0 的特性
+map.addLayer({
+    'id': 'arrow-symbol-layer',
+    'type': 'symbol',
+    'source': 'try',
+    'layout': {
+        'icon-image': 'arrow',  // 使用 'arrow' 图标
+        'icon-size': [
+            'interpolate',
+            ['linear'],
+            ['get', 'change_percent'],
+            -1, 2,  // 当 'paper_sum' 为 0 时，图标的大小为 0.1
+            0, 0  // 当 'paper_sum' 为 100 时，图标的大小为 1
+        ],
+        'icon-allow-overlap': true,  // 允许图标重叠
+        'icon-anchor': 'bottom' ,  // 图标的锚点在底部
+    },
+    'filter': ['all',
+    ['<', ['get', 'change_percent'], 0],
+    ['>=', ['get', 'paper_sum'], 100]
+]
+});
+});
+		
+map.addLayer({
+    'id': 'drop-percent-layer',
+    'type': 'circle',
+    'source': 'try',
+    'paint': {
+        'circle-radius': ['interpolate', ['linear'], ['get', 'paper_sum'], 100, 4, 1000, 16, 3000, 32],
+        'circle-color': [
+    'case',
+    ['<', ['get', 'change_percent'], 0], '#500DC9',  // 当 'change_percent' 为负数时，颜色为红色
+    '#A9A9A9'
+],
+        'circle-opacity': 0.9
+    },
+    'filter': ['>=', ['get', 'paper_sum'], 100]
+});
+
+map.addLayer({
+    'id': 'text-layer',
+    'type': 'symbol',
+    'source': 'try',
+    'layout': {
+        'text-field': ['get', 'display_name'],  // 从数据源中获取 'display_name' 字段
+        'text-size': 18,  // 文本大小
+        'text-anchor': 'top',  // 文本锚点设置为顶部
+        'text-offset': [0, 0.5],  // 文本偏移，使其位于点的上方
+        'visibility': 'visible'
+    },
+    'paint': {
+        'text-color': '#000000'  // 文本颜色
+    },
+    'minzoom': 7  // 设置文本显示的最小缩放级别
+});
+
+
+			// Populate the filter dropdown
+            const uniqueTypes = new Set();
+            map.getSource('try').setData('institutions0812.geojson');
+
+            fetch('institutions0812.geojson')
+                .then(response => response.json())
+                .then(data => {
+                    data.features.forEach(feature => {
+                        uniqueTypes.add(feature.properties.type);
+                    });
+                    const filter = document.getElementById('type-filter');
+                    uniqueTypes.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type;
+                        option.textContent = type;
+                        filter.appendChild(option);
+                    });
+                });
+
+            // Add event listener for the filter dropdown
+            document.getElementById('type-filter').addEventListener('change', function(e) {
+    const selectedType = e.target.value;
+    ['drop-percent-layer','arrow-symbol-layer','text-layer'].forEach(function(id) {
+        map.setFilter(id, selectedType ? ['==', ['get', 'type'], selectedType] : null);
+    });
+});
+			
+
+	    	var popup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
+
+        ['drop-percent-layer','arrow-symbol-layer','text-layer'].forEach(function(id) {
+    map.on('click', id, function(e) {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
+
+            // Copy coordinates array.
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const display_name = e.features[0].properties.display_name;
+            const paper_sum = e.features[0].properties.paper_sum;
+            const type = e.features[0].properties.type;
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            if (['mercator', 'equirectangular'].includes(map.getProjection().name)) {
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+            }
+
+            // Fly to the point
+            map.flyTo({
+                center: coordinates,
+                zoom: 10 // Adjust zoom level as needed
+            });
+
+            // Display the information in the sidebar
+            const text = `Number of papers: ${paper_sum}<br>Type: ${type}`;
+            document.getElementById('info-text').innerHTML = text;
+
+            // Populate the popup and set its coordinates
+            // based on the feature found.
+            // popup.setLngLat(coordinates).setHTML(text).addTo(map);
+
+
+			const data = [];
+
+            for (let year = 2015; year <= 2023; year++) {
+                if (e.features[0].properties[year]) {
+                    data.push({ year: year, value: e.features[0].properties[year] });
+                }
+            }
+
+            // Remove existing SVG if any
+            d3.select("#chart").selectAll("*").remove();
+
+            // Set the dimensions and margins of the graph
+            const margin = { top: 10, right: 30, bottom: 30, left: 40 },
+                width = 250 - margin.left - margin.right,
+                height = 200 - margin.top - margin.bottom;
+
+            // Append the svg object to the body of the page
+            const svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // X scale
+            const x = d3.scaleLinear()
+                .domain([2015, 2023])
+                .range([0, width]);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x).ticks(11).tickFormat(d3.format("d")));
+
+            // Y scale
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.value)])
+                .nice()
+                .range([height, 0]);
+
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            // Line generator
+            const line = d3.line()
+                .x(d => x(d.year))
+                .y(d => y(d.value));
+
+            // Append the line to the svg
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "#caadff")
+                .attr("stroke-width", 1.5)
+                .attr("d", line);
+        });
+        });
+    });
+
+		document.getElementById('return-btn-US').addEventListener('click', function() {
+            map.flyTo({
+                center: [-98.5795, 39.8283], // original center
+                zoom: 3.7 // original zoom
+            });
+            document.getElementById('info-text').innerHTML = 'Click on a point to see the details here.';
+			d3.select("#chart").selectAll("*").remove();
+        });
+
+		document.getElementById('return-btn-China').addEventListener('click', function() {
+            map.flyTo({
+                center: [104.195397, 35.86166], // original center
+                zoom: 3.5 // original zoom
+            });
+            document.getElementById('info-text').innerHTML = 'Click on a point to see the details here.';
+			d3.select("#chart").selectAll("*").remove();
+        });
+    </script>
+</body>
+</html>
