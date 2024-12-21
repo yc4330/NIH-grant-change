@@ -151,12 +151,6 @@ And then I can have the funding information for each project.
 
 my.query <- '("China"[Affiliation] AND "united states"[Affiliation]) AND (NIH[Grants and Funding])' 
 
-### Visualization
-
-See [here]("https://yc4330.github.io/Master-Project"). Slide to explore how varying ranges of scholars impact the shape of the line graph. Scholars are sorted in descending order based on the total number of collaborative papers.
-
-<iframe src="https://yc4330.github.io/Master-Project" width="600" height="400"></iframe>
-
 ### Analysis
 
 Is it because of covid? The answer is no when compared with the data with other countries.
