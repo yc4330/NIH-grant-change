@@ -161,8 +161,8 @@ See [here]("https://yc4330.github.io/Master-Project"). Slide to explore how vary
 
 Is it because of covid? The answer is no when compared with the data with other countries.
 
-<img src="1721063009069.jpg" width="400">
+<img src="image/1721063009069.jpg" width="400">
 
-<img src="1721063053517.jpg" width="400">
+<img src="image/1721063053517.jpg" width="400">
 
 ### 
